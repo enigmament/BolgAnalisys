@@ -8,7 +8,7 @@ import App from './scripts/App.js';
 
 ReactDOM.render(
   <React.StrictMode>
-      <div class="container">
+      <div className="container">
         <App />
       </div>
   </React.StrictMode>,
