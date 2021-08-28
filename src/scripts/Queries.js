@@ -5,13 +5,76 @@ import  {
     gql
 } from "@apollo/client";
 
-//toremove3
-import { letterFrequency } from '@visx/mock-data';
-import { Group } from '@visx/group';
-import { Bar } from '@visx/shape';
-import { scaleLinear, scaleBand } from '@visx/scale';
+import GroupBar from './BarStack'
 
-function QueryUser () {
+const getRandomColor = () => {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
+
+const dataFiltered = (data, maxTopicNumber) =>  {
+   
+    const resultRed = data.allPosts.reduce( (acc, post)=> {
+        let date = new Date(parseInt(post.createdAt, 10));
+        date.setDate(1);
+        let monthString = (date.getMonth()+1) < 10 ? `0${date.getMonth()+1}` : `${date.getMonth()+1}`;
+        const dateStr = `${date.getFullYear()}-${monthString}`
+        if(!acc[dateStr]) {
+            acc[dateStr] = {
+                dateMonth: date,
+                count: 0,
+                topics: {}
+            }
+        }
+        acc[dateStr].count++;
+        let monthTopicsList = acc[dateStr].topics;
+        for (let i = 0; i < post.likelyTopics.length; i++) {
+            const labelTopic = post.likelyTopics[i].label;
+            const likeHood = post.likelyTopics[i].likelihood;
+            if(!monthTopicsList[labelTopic] ) {
+                monthTopicsList[labelTopic] = 0;
+            }
+            monthTopicsList[labelTopic] += likeHood;
+       }
+       
+        return acc;
+    }, {});
+    
+    //order topics 
+    const resultsOrdered = Object.entries(resultRed).map( (value) => {
+        const element = value;
+        const orderElement =  Object.entries(value[1].topics).sort((a, b)=> {
+            return  b[1] - a[1];
+        }).filter( (el, id) => {
+            if(maxTopicNumber < 0)
+                return true;
+            return id < maxTopicNumber
+        })
+        .reduce((acc,topic)=>{
+                    acc[topic[0]] = ((topic[1]/element[1].count) *100);
+                    return acc;
+        }, {})
+
+        return {
+            month: element[0],
+            numberPost: element[1].count,
+            date: element[1].dateMonth,
+            topics: orderElement,
+        }
+    } )
+
+    return resultsOrdered;
+}
+
+
+function QueryUser ({
+    analisysType,
+    maxTopicNumber}) {
 
     const GET_ALL_POST = gql`
         query Post {
@@ -33,85 +96,32 @@ function QueryUser () {
     if(error) return <div>Error retriveing data...</div>
 
 
-    let lastday = new Date(parseInt(data.allPosts[0].createdAt)); //.valueOf()
+    const dataFitleredByTopics = dataFiltered(data, parseInt(maxTopicNumber, 10));
 
-
-    let lastdayMonthfrom = new Date().valueOf();
-    let firstdayMonth = lastday.setDate(1).valueOf();
-
-    let mostPopularTopic = []
-
-    let tempval = {}
-    mostPopularTopic[`${firstdayMonth.getFullYear()}-${firstdayMonth.getMonth()+1}`]
-    data.allPosts.map( (post) => {
-        if(lastdayMonthfrom.valueOf() <= post.createdAt || post.createdAt < firstdayMonth.valueOf()){
-            mostPopularTopic[`${firstdayMonth.getFullYear()}-${firstdayMonth.getMonth()+1}`]
-            tempval = {}
-        }
-       
-        for (let i = 0; i < 3; i++) {
-            if(tempval[post.likelyTopics[0].label] ) {
-                tempval[post.likelyTopics[0]]++
-            }
-            else {
-                tempval[post.likelyTopics[0]] = 0;
-            }
-        }
-    })
-   
-    
-   // console.log (listOfUser)
-
-    // We'll use some mock data from `@visx/mock-data` for this.
-    const data3 = letterFrequency;
-    // Define the graph dimensions and margins
-    const width = 500;
-    const height = 500;
-    const margin = { top: 20, bottom: 20, left: 20, right: 20 };
-
-    // Then we'll create some bounds
-    const xMax = width - margin.left - margin.right;
-    const yMax = height - margin.top - margin.bottom;
-
-    // We'll make some helpers to get at the data we want
-    const x = d => d.letter;
-    const y = d => +d.frequency * 100;
-
-    // And then scale the graph by our data
-    const xScale = scaleBand({
-        range: [0, xMax],
-        round: true,
-        domain: data3.map(x),
-        padding: 0.4,
-    });
-    const yScale = scaleLinear({
-        range: [yMax, 0],
-        round: true,
-        domain: [0, Math.max(...data3.map(y))],
+    const keysSet = new Set();
+    dataFitleredByTopics.forEach(element => {
+        Object.keys(element.topics).forEach((topicname)=> {
+            keysSet.add(topicname)
+        })
     });
 
-    // Compose together the scale and accessor functions to get point functions
-    const compose = (scale, accessor) => data => scale(accessor(data));
-    const xPoint = compose(xScale, x);
-    const yPoint = compose(yScale, y);
+    const dataList = dataFitleredByTopics.map((element) => {
+        return {
+            month: element.month,
+            ...element.topics
+        }
+    }).sort((a, b)=> {
+        return a.month < b.month ? 1 : a.month > b.month  ? -1 : 0;
+    }) 
 
-    return (<div>
-         <svg width={width} height={height}>
-            {data3.map((d, i) => {
-                const barHeight = yMax - yPoint(d);
-                return (
-                <Group key={`bar-${i}`}>
-                    <Bar
-                        x={xPoint(d)}
-                        y={yMax - barHeight}
-                        height={barHeight}
-                        width={xScale.bandwidth()}
-                        fill="#fc2e1c"
-                    />
-                </Group>
-                );
-            })}
-        </svg>
+   const keys = [...keysSet];
+
+   const color = keys.map( () => getRandomColor())
+
+    return (<div className="row">
+        <div className="col-12">
+            <GroupBar width={800} height={800} dataList={dataList} keyset={keys} colorset={color} />
+        </div>
     </div>)
 }
 

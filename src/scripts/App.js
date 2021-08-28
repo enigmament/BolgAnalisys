@@ -18,11 +18,11 @@ function App() {
                 </header>
             </div>
             <div className="col-12"> 
-                <body className="row">
+                <div className="row">
                     <div  className="col-12">
                         <MainPage/>
                     </div>
-                </body>
+                </div>
             </div>
         
         </div>
