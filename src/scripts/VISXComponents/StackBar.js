@@ -3,7 +3,6 @@ import { Group } from '@visx/group';
 import { BarStack } from '@visx/shape';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
-import { timeParse, timeFormat } from 'd3-time-format';
 import { useTooltip, useTooltipInPortal, defaultStyles } from "@visx/tooltip";
 import { LegendOrdinal } from "@visx/legend";
 
@@ -13,7 +12,7 @@ const darkGray = "#282828";
 
 
 
-export default function GroupBar({
+export default function StackBar({
     width,
     height,
     dataList = {}, 
@@ -63,10 +62,10 @@ export default function GroupBar({
     //const format = timeFormat('%b %d');
     //const formatDate = (date) => format(parseDate(date));
 
-    const getMonth = (data) => data.month;
+    const getXValue = (data) => data.xValue;
     // new scale 
-    const monthScale =  scaleBand({
-        domain: dataList.map(getMonth),
+    const xValueScale =  scaleBand({
+        domain: dataList.map(getXValue),
         padding: 0.4,
     });
 
@@ -94,7 +93,7 @@ export default function GroupBar({
       };
 
     percScale.range([yMax, yMin]);
-    monthScale.range([xMin, xMax]);
+    xValueScale.range([xMin, xMax]);
 
     let tooltipTimeout;
 
@@ -105,8 +104,8 @@ export default function GroupBar({
                 <Group top={margin.top} left={margin.left}>
                     <BarStack data={dataList}
                         keys={keyset}
-                        x={getMonth}
-                        xScale={monthScale}
+                        x={getXValue}
+                        xScale={xValueScale}
                         yScale={percScale}
                         color={colorScale}>
                         
@@ -146,7 +145,7 @@ export default function GroupBar({
                 <AxisBottom
                     top={yMax + margin.top}
                     left={margin.left}
-                    scale={monthScale}
+                    scale={xValueScale}
                     hideTicks
                     stroke={gray}
                     strokeWidth={1}
@@ -189,10 +188,10 @@ export default function GroupBar({
                         <strong>{tooltipData.key}</strong>
                     </div>
                     <div className="tooltip-value">
-                        {`${tooltipData.bar.data[tooltipData.key].toFixed(3)}% on month ${getMonth(tooltipData.bar.data)}`}
+                        {`${tooltipData.bar.data[tooltipData.key].toFixed(3)}% on month ${getXValue(tooltipData.bar.data)}`}
                     </div>
                     <div className="tooltip-date">
-                        <small>{ getMonth(tooltipData.bar.data)}</small>
+                        <small>{ getXValue(tooltipData.bar.data)}</small>
                     </div>
                 </TooltipInPortal>
             )}
