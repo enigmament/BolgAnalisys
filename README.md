@@ -14,10 +14,12 @@ I use two types of graphic and reuse them in all my case: the BarStack and the s
 
 I prefer the BarStack to bargroup cause it was for me more easy to rapresent the data (for each month the top topics list could be change and the group bar need to rapresent always all types ).
 
-For the grouping of the author i used 3 option for select
+For the grouping of the author i used 4 option for select
 The first one get a bar, that indicate the number of post for each month
 The second get the list of all topics and is ordered on most revelant to less revelant  
-The third ona get the most revelant topic of each month
+The third one the user can select a single specific topic indipendently for its position
+The forth one get the most revelant topic of each month
+
 In case the user choose the thirdone it can choose also the number of the elements that it can show,
 
 The logic on how i extract the list of data to whow is present in the AuthorFilter and the TopicFilter files
