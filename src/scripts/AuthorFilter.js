@@ -78,7 +78,7 @@ export default function AuthorFilter ( {
         "maintopics" : "Topics name"
     }
     
-    const authorBarFilter = (selectdAuthorFilter, filterAuthorOption) => {
+    const authorBarFilter = (selectdAuthorFilter, filterAuthorOption, authorPrevalentTopicNumber) => {
         const listPostByAuthor = dataAgg[selectdAuthorFilter];
         let barList = [];
         let listKeys = [];
@@ -113,7 +113,9 @@ export default function AuthorFilter ( {
                 const topicByMonthList  =  Object.entries(value[1].topics).sort((a, b)=>{
                     return  b[1] - a[1];
                 }).filter( (el, id) => {
-                    return id < 1;
+                    if(authorPrevalentTopicNumber < 0)
+                        return true;
+                    return id < authorPrevalentTopicNumber;
                 })
                 .reduce((acc, topic)=>{
                     keysSet.add(topic[0]);
@@ -144,34 +146,64 @@ export default function AuthorFilter ( {
 
     const [selectdAuthorFilter, setAuthorFilter] = useState(authorList[0].id);
     const [filterAuthorOption, setFilterAuthorOption] = useState( "postpermonth");
-    const [{dataforGraphics, keyList, colorList}, setDataForGraphics]  = useState(authorBarFilter(selectdAuthorFilter, filterAuthorOption))
+    const [authorPrevalentTopicNumber, setAuthorPrevalentTopicNumber]  = useState( "1");
+    const [{dataforGraphics, keyList, colorList}, setDataForGraphics]  = useState(authorBarFilter(selectdAuthorFilter, filterAuthorOption, authorPrevalentTopicNumber))
 
     return (<div className="row">
-                <div className="col-12">
-                    <Form.Control as="select" aria-label="Max top topics to show" 
-                        value={selectdAuthorFilter}
-                        onChange={ (e) => {
-                            setAuthorFilter(e.target.value)
-                            const barInfo = authorBarFilter(e.target.value, filterAuthorOption)
-                            setDataForGraphics(barInfo);
-                        }} >
-                        {authorList.map((author)=>{
-                            return <option key={author.id} value={author.id}>{`${author.firstName} ${author.lastName}`}</option>
-                        })}
-                    </Form.Control>
-
-                    <Form.Control  as="select" value={filterAuthorOption}
-                        onChange={ (e) => {
-                            setFilterAuthorOption( e.target.value);
-                            const barInfo = authorBarFilter(selectdAuthorFilter, e.target.value)
-                            setDataForGraphics(barInfo);
-                        }} >
-                        <option value="postpermonth">Post per month</option>
-                        <option value="maintopics">Main topics of author</option>
-                        <option value="trendtopic">Trend topics by months</option>
-                    </Form.Control>
+                <div className="col-12 col-md-4">
+                    <div className="row"> 
+                        <div className="col-12 pb-3">
+                            <Form.Label>Select the author</Form.Label>
+                            <Form.Control as="select" aria-label="Max top topics to show" 
+                                value={selectdAuthorFilter}
+                                onChange={ (e) => {
+                                    setAuthorFilter(e.target.value)
+                                    const barInfo = authorBarFilter(e.target.value, filterAuthorOption, authorPrevalentTopicNumber)
+                                    setDataForGraphics(barInfo);
+                                }} >
+                                {authorList.map((author)=>{
+                                    return <option key={author.id} value={author.id}>{`${author.firstName} ${author.lastName}`}</option>
+                                })}
+                            </Form.Control>
+                        </div>
+                        <div className="col-12 pb-3">
+                            <Form.Label>Select the analisys type </Form.Label>
+                            <Form.Control  as="select" value={filterAuthorOption}
+                                onChange={ (e) => {
+                                    setFilterAuthorOption( e.target.value);
+                                    const barInfo = authorBarFilter(selectdAuthorFilter, e.target.value, authorPrevalentTopicNumber)
+                                    setDataForGraphics(barInfo);
+                                }} >
+                                <option value="postpermonth">Post per month</option>
+                                <option value="maintopics">Main topics of author</option>
+                                <option value="trendtopic">Trend topics by months</option>
+                            </Form.Control>   
+                        </div>
+                        {filterAuthorOption === "trendtopic" && 
+                            <div className="col-12 pb-3">
+                                <Form.Label>Select the number of most prevalent topics</Form.Label>
+                                <Form.Control  as="select" value={authorPrevalentTopicNumber}
+                                    onChange={ (e) => {
+                                        setAuthorPrevalentTopicNumber( e.target.value);
+                                        const barInfo = authorBarFilter(selectdAuthorFilter,filterAuthorOption, e.target.value)
+                                        setDataForGraphics(barInfo);
+                                    }} >
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="-1">All</option>
+                                </Form.Control>   
+                            </div>
+                        }
+                    </div>
                 </div>
-                <div  className="col-12">
+                <div  className="col-12 col-md-8">
                     {(filterAuthorOption === "postpermonth" || filterAuthorOption === "maintopics" ) &&
                         <AuthorBar width={800} height={800} dataList={dataforGraphics} xLabel={autorXLabaleBar[filterAuthorOption]} colorList={colorList}/>
                     }

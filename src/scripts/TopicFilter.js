@@ -92,7 +92,8 @@ function TopicFilter ({
    
     return (
         <div className="row">
-            <div className="col-12">
+            <div className="col-12 col-md-4 pb-3">
+                <Form.Label>Select the number of most prevalent topics for each month</Form.Label>
                 <Form.Control as="select" aria-label="Max top topics to show" 
                     value={maxTopicNumber}
                     onChange={ (e) => {
@@ -108,7 +109,7 @@ function TopicFilter ({
                     <option value="-1">All</option>
                 </Form.Control>
             </div>
-            <div className="col-12">
+            <div className="col-12 col-md-8">
                 <StackBar width={800} height={800} dataList={dataList} keyset={keys} colorset={color} />
             </div>
            

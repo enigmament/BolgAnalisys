@@ -16,7 +16,7 @@ class MainPage extends React.Component {
             uri: 'https://fakerql.nplan.io/graphql',
             cache: new InMemoryCache()
         }),
-        type: "",
+        type: "topics",
         maxTopicNumber: 3,
         authorFilter: "",
         authorList: []
@@ -35,10 +35,11 @@ class MainPage extends React.Component {
         return (
             <ApolloProvider client={this.state.client}>
                 <div className="row">
-                    <div className="col-4">
+                    <div className="col-12">
                         <div className="row">
-                            <div className="col-12">
+                            <div className="col-12 col-md-4 pb-3 ">
                                 <Form>
+                                    <Form.Label>Select type of data aggregation</Form.Label>
                                     <Form.Control as="select" aria-label="Select Type Analisys" 
                                         value={this.state.type}
                                         onChange={ (e) => {
@@ -46,7 +47,6 @@ class MainPage extends React.Component {
                                                 type: e.target.value
                                             })
                                         }} >
-                                        <option value=""> Select type</option>
                                         <option value="topics">By topics</option>
                                         <option value="author">By authors</option>
                                     </Form.Control>
@@ -54,9 +54,9 @@ class MainPage extends React.Component {
                             </div>
                         </div>
                     </div>
-                    <div  className="col-8">
+                    <div  className="col-12">
                         <QueryUser  analisysType={this.state.type} setListUSer={setAuthor}/>
-                    </div>
+                    </div>            
                 </div>
             </ApolloProvider>
         )
