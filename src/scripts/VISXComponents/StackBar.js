@@ -1,6 +1,7 @@
 import React from 'react';
 import { Group } from '@visx/group';
 import { BarStack } from '@visx/shape';
+import { GridRows } from "@visx/grid";
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
 import { useTooltip, useTooltipInPortal, defaultStyles } from "@visx/tooltip";
@@ -156,14 +157,22 @@ export default function StackBar({
                     })} />
                 <AxisLeft
                     top={margin.top}
-                    left={margin.left}
+                    left={xMax + margin.left}
                     scale={percScale}
                     hideTicks
                     numTicks={5}
                     tickFormat={(percent) => percent + "%"}
                     stroke={gray}
                     strokeWidth={3} />
-
+                  <GridRows
+                    top={margin.top}
+                    left={margin.left}
+                    scale={percScale}
+                    width={xMax}
+                    height={yMax - margin.top - margin.bottom}
+                    stroke="white"
+                    strokeOpacity={0.4}
+                    numTicks={5} />
             </svg>
             <div style={{
                 position: "absolute",

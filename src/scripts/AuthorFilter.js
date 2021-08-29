@@ -78,7 +78,9 @@ export default function AuthorFilter ( {
         "maintopics" : "Topics name"
     }
     
-    const authorBarFilter = (selectdAuthorFilter, filterAuthorOption, authorPrevalentTopicNumber) => {
+    const authorBarFilter = (values) => {
+        const selectdAuthorFilter = values.selectdAuthorFilter;
+        const filterAuthorOption = values.filterAuthorOption;
         const listPostByAuthor = dataAgg[selectdAuthorFilter];
         let barList = [];
         let listKeys = [];
@@ -107,6 +109,7 @@ export default function AuthorFilter ( {
             color.push(getRandomColor());
         }
         else if (filterAuthorOption === "trendtopic" ) {
+            const authorPrevalentTopicNumber = values.authorPrevalentTopicNumber
             const keysSet = new Set();
             barList = Object.entries(listPostByAuthor.topicsByMonth).map((value)=>{
 
@@ -134,6 +137,42 @@ export default function AuthorFilter ( {
             listKeys = [...keysSet];
             color = listKeys.map( () => getRandomColor());
         }
+        else if (filterAuthorOption === "specificTopic" ) {
+            let topicName = "";
+            if(values.topicName) {
+                topicName = values.topicName
+            }
+            const keysSet = new Set();
+            barList = Object.entries(listPostByAuthor.topicsByMonth).map((value)=>{
+                
+                Object.entries(value[1].topics).forEach((el)=>{ 
+                    keysSet.add(el[0])
+                    if(topicName.length == 0) {
+                        topicName = el[0]
+                    }
+                })
+
+                const topicByMonthList  =  Object.entries(value[1].topics).filter( (el) => {
+                    return el[0] === topicName
+                }).sort((a, b)=>{
+                    return  b[1] - a[1];
+                })
+                .reduce((acc, topic)=>{
+                    keysSet.add(topic[0])
+                    acc[topic[0]] = ((topic[1]/value[1].count) / powDivPercExp);
+                    return acc;
+                }, {})
+
+                return {
+                    xValue: value[0],
+                    ...topicByMonthList
+                }
+            }).sort( (a, b) => {
+                return a.xValue < b.xValue ? 1 : a.xValue > b.xValue  ? -1 : 0;
+            })
+            listKeys = [...keysSet];
+            color = listKeys.map( () => getRandomColor());
+        }
 
         return {
             dataforGraphics : barList, 
@@ -142,12 +181,19 @@ export default function AuthorFilter ( {
         }
     }
 
+    
     const dataAgg = aggreagateByAuthor(data);
 
     const [selectdAuthorFilter, setAuthorFilter] = useState(authorList[0].id);
     const [filterAuthorOption, setFilterAuthorOption] = useState( "postpermonth");
+    const [{dataforGraphics, keyList, colorList}, setDataForGraphics]  = useState(authorBarFilter({selectdAuthorFilter, filterAuthorOption}))
     const [authorPrevalentTopicNumber, setAuthorPrevalentTopicNumber]  = useState( "1");
-    const [{dataforGraphics, keyList, colorList}, setDataForGraphics]  = useState(authorBarFilter(selectdAuthorFilter, filterAuthorOption, authorPrevalentTopicNumber))
+    const [topicName, setTopicName] = useState(keyList[0] ? keyList[0] : "");
+    
+    let keylistfilter = keyList;
+    if(filterAuthorOption === "specificTopic") {
+        keylistfilter = keylistfilter.filter((el) => el === topicName);
+    }
 
     return (<div className="row">
                 <div className="col-12 col-md-4">
@@ -158,7 +204,11 @@ export default function AuthorFilter ( {
                                 value={selectdAuthorFilter}
                                 onChange={ (e) => {
                                     setAuthorFilter(e.target.value)
-                                    const barInfo = authorBarFilter(e.target.value, filterAuthorOption, authorPrevalentTopicNumber)
+                                    const barInfo = authorBarFilter({
+                                        selectdAuthorFilter: e.target.value, 
+                                        filterAuthorOption, 
+                                        authorPrevalentTopicNumber,
+                                        topicName})
                                     setDataForGraphics(barInfo);
                                 }} >
                                 {authorList.map((author)=>{
@@ -171,11 +221,16 @@ export default function AuthorFilter ( {
                             <Form.Control  as="select" value={filterAuthorOption}
                                 onChange={ (e) => {
                                     setFilterAuthorOption( e.target.value);
-                                    const barInfo = authorBarFilter(selectdAuthorFilter, e.target.value, authorPrevalentTopicNumber)
+                                    const barInfo = authorBarFilter({
+                                        selectdAuthorFilter, 
+                                        filterAuthorOption: e.target.value, 
+                                        authorPrevalentTopicNumber,
+                                        topicName})
                                     setDataForGraphics(barInfo);
                                 }} >
                                 <option value="postpermonth">Post per month</option>
                                 <option value="maintopics">Main topics of author</option>
+                                <option value="specificTopic">Specific topic</option>
                                 <option value="trendtopic">Trend topics by months</option>
                             </Form.Control>   
                         </div>
@@ -185,7 +240,7 @@ export default function AuthorFilter ( {
                                 <Form.Control  as="select" value={authorPrevalentTopicNumber}
                                     onChange={ (e) => {
                                         setAuthorPrevalentTopicNumber( e.target.value);
-                                        const barInfo = authorBarFilter(selectdAuthorFilter,filterAuthorOption, e.target.value)
+                                        const barInfo = authorBarFilter({selectdAuthorFilter,filterAuthorOption, authorPrevalentTopicNumber: e.target.value, topicName})
                                         setDataForGraphics(barInfo);
                                     }} >
                                     <option value="1">1</option>
@@ -201,14 +256,30 @@ export default function AuthorFilter ( {
                                 </Form.Control>   
                             </div>
                         }
+                        {filterAuthorOption === "specificTopic" &&
+                             <div className="col-12 pb-3">
+                             <Form.Label>Select the number of most prevalent topics</Form.Label>
+                                <Form.Control  as="select" value={topicName}
+                                    onChange={ (e) => {
+                                        setTopicName( e.target.value);
+                                        const barInfo = authorBarFilter({selectdAuthorFilter,filterAuthorOption, topicName: e.target.value})
+                                        setDataForGraphics(barInfo);
+                                    }} >
+                                    <option key="empty" value="">Select a topic</option>
+                                    {keyList.map((keyVal)=>{
+                                        return <option key={keyVal} value={keyVal}>{keyVal}</option>
+                                    })}
+                             </Form.Control>   
+                         </div>
+                        }
                     </div>
                 </div>
                 <div  className="col-12 col-md-8">
                     {(filterAuthorOption === "postpermonth" || filterAuthorOption === "maintopics" ) &&
                         <AuthorBar width={800} height={800} dataList={dataforGraphics} xLabel={autorXLabaleBar[filterAuthorOption]} colorList={colorList}/>
                     }
-                    {filterAuthorOption === "trendtopic" && 
-                        <StackBar width={800} height={800} dataList={dataforGraphics} keyset={keyList} colorset={colorList} />
+                    {(filterAuthorOption === "trendtopic" || filterAuthorOption === "specificTopic") && 
+                        <StackBar width={800} height={800} dataList={dataforGraphics} keyset={keylistfilter} colorset={colorList} />
                     }
                 </div>
             </div>)
